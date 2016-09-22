@@ -26,6 +26,10 @@ extern "C" {
 #define PASSWORD "***"
 // URLROOT - the root of the API address - with no '/' at the end!
 #define URLROOT "http://***/thermostat"
+// FREEZESAFE - the temperature under which the heater will be started
+// with no controller from the server, the temperature is the one that 
+// is read by this device and should be adjusted to what is deemed safe
+#define FREEZESAFE 12.0
 ////////////////////////////////////////////////////////////////////////////////
 
 // These are correction values for when using the Wemos D1 board with TMP35 sensor
@@ -40,10 +44,15 @@ extern "C" {
 char channels[] = { CHANNELS };
 
 void setup() {
+  //this is required to read ADC values reliably
   wifi_set_sleep_type(NONE_SLEEP_T);
   
   Serial.begin(57600);
   pinMode(D1, OUTPUT);
+  pinMode(D2, OUTPUT);
+  pinMode(D3, OUTPUT);
+  
+  // delay is required only for debugging
   delay(2000);
   
   WiFi.mode(WIFI_STA);
@@ -53,7 +62,7 @@ void loop() {
   int retries = 0;
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("Not connected to the WiFi.");
-    WiFi.begin("1", "takemehome");
+    WiFi.begin(SSID, PASSWORD);
     
     while ( retries < 30 ) {
       if (WiFi.status() == WL_CONNECTED) {
@@ -128,6 +137,12 @@ void loop() {
         digitalWrite(D(i), LOW);
         Serial.println("Unsuccessful call to the API!");
       }
+      
+      // ensure the house does not freeze even if the server is not 
+      // available to control the heating
+      if (temp < FREEZESAFE) {
+        digitalWrite(D(i), HIGH);
+      }
     }
   }
   
@@ -135,7 +150,8 @@ void loop() {
   delay(59000);
 }
 
-// transforms the index of the zone to the digital pin to drive the Relay
+// transforms the index of the channel to the digital pin to drive the Relay
+// add more cases to support more channels
 uint8_t D(uint8_t index) {
   switch (index) {
     case 0: return D1;
