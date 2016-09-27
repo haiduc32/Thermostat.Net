@@ -13,13 +13,12 @@ extern "C" {
 // for a basic setup you don't have to change anything else
 //
 // ZONE is the name under which the temperature sensor will send data
-#define ZONE "Living";
+#define ZONE "Office";
 // ISCONTROLLER indicates if it is connected to a heater
 #define ISCONTROLLER true
 // CHANNELS defines the channels for the heater
 // Multiple Relays should be connected to D1, D2, D3 consecutively
 // (ammend the code to support more zones- limited to 3 now)
-#define CHANNELS 0 //fro multiple zones write: 0,1 or 0,2,5
 // SSID - the name of the WiFi network
 #define SSID "***"
 // PASSWORD - the password for the WiFi network
@@ -63,8 +62,10 @@ void loop() {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("Not connected to the WiFi.");
     WiFi.begin(SSID, PASSWORD);
+    Serial.println("after wifi begin");
     
     while ( retries < 30 ) {
+      Serial.println("loop");
       if (WiFi.status() == WL_CONNECTED) {
         break;
       }
@@ -101,24 +102,28 @@ void loop() {
   s += "}";
   Serial.println(s);
   
-  
+  Serial.println(URLROOT"/api/temperature");
   http.begin(URLROOT"/api/temperature");
   http.setTimeout(30000);
+  http.addHeader("Content-Type", "application/json");
   httpCode = http.POST(s);
   
-  if (httpCode > 0) {
-    if (httpCode == HTTP_CODE_OK) {
-      Serial.println("Successfully posted temperature.");
-    }
+  if (httpCode == HTTP_CODE_OK) {
+    Serial.println("Successfully posted temperature.");
+  } else {
+    Serial.println("Unsuccessfully posted temperature.");
+    Serial.println(httpCode);
   }
   
+  HTTPClient http2;
   if (ISCONTROLLER) {
     for (uint8_t i = 0; i < sizeof(channels); i++) {
       String url = URLROOT"/api/";
       url += channels[i];
-      http.begin(url);
-      http.setTimeout(30000);
-      httpCode = http.GET();
+      Serial.println(url);
+      http2.begin(url);
+      http2.setTimeout(30000);
+      httpCode = http2.GET();
       
       bool successfulCall = false;
       if (httpCode > 0) {
@@ -136,11 +141,13 @@ void loop() {
         //there was a problem accessing the API, stop the heating to prevent overheating
         digitalWrite(D(i), LOW);
         Serial.println("Unsuccessful call to the API!");
+        Serial.println(httpCode);
       }
       
       // ensure the house does not freeze even if the server is not 
       // available to control the heating
       if (temp < FREEZESAFE) {
+        Serial.println("Stop freeze!");
         digitalWrite(D(i), HIGH);
       }
     }
