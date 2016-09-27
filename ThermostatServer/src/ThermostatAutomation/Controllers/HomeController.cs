@@ -44,10 +44,9 @@ namespace ThermostatAutomation.Controllers
                 select t).FirstOrDefault();
 
             ViewData["Zones"] = Status.Instance.Zones;
-
-            BasicEngine engine = new BasicEngine();
+            
             //TODO: show multiple zones in the UI?
-            ViewData["HeatingStatus"] = engine.Evaluate(0) ? "ON" : "OFF";
+            ViewData["HeatingStatus"] = Engine.Instance.Evaluate(0) ? "ON" : "OFF";
 
             return View();
         }

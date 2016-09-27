@@ -7,7 +7,6 @@ using MongoDB.Driver;
 using ThermostatAutomation.Models;
 using ThermostatAutomation.Rules;
 
-// For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace ThermostatAutomation.Controllers
 {
@@ -18,7 +17,7 @@ namespace ThermostatAutomation.Controllers
     {
 
         // GET: api/
-        [HttpGet]
+        [HttpGet("{zone?}")]
         public string Get(int zone = 0)
         {
             return Engine.Instance.Evaluate(zone) ? "ON" : "OFF";

@@ -36,7 +36,7 @@ namespace ThermostatAutomation.Rules
                 EndTime = new TimeSpan(22, 30, 0),
                 DaysOfTheWeek = WorkingDays,
                 Zone = "Office",
-                Temperature = 22m
+                Temperature = 24m
             });
             //night rule (applies to all days)
             Rules.Add(new Rule
@@ -44,14 +44,14 @@ namespace ThermostatAutomation.Rules
                 StartTime = new TimeSpan(18, 30, 0),
                 EndTime = new TimeSpan(22, 30, 0),
                 Zone = "Bedroom",
-                Temperature = 20m
+                Temperature = 21m
             });
             //for the weekend keep it on all the time
             Rules.Add(new Rule
             {
                 DaysOfTheWeek = new List<DayOfWeek> { DayOfWeek.Saturday, DayOfWeek.Sunday },
                 Zone = "Office",
-                Temperature = 22m
+                Temperature = 24m
             });
 
             // do we need a safety net? if no rule found apply this rule

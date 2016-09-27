@@ -57,12 +57,19 @@ namespace ThermostatAutomation.Rules
             Zone activeZone = Status.Instance.Zones.SingleOrDefault(x => x.Name == activeRule.Zone) ??
                 Status.Instance.Zones.FirstOrDefault(x => IsInChannel(x.Name, settings) && !IsStale(x) && x.Temperature.HasValue);
 
+            if (!activeZone.Temperature.HasValue)
+            {
+                //this situation happens when there are absolutely no values
+                // we'll just wait till there are any values.
+                return false;
+            }
+
             return activeZone.Temperature.Value < activeRule.Temperature;
         }
 
         private bool IsStale(Zone zone) => !zone.Timestamp.HasValue || zone.Timestamp.Value.AddMinutes(-5) < DateTime.Now;
 
-        private bool IsInTimeInterval(Rule rule) => DateTime.Today + rule.StartTime <= DateTime.Now && DateTime.Now < DateTime.Today + rule.EndTime;
+        private bool IsInTimeInterval(Rule rule) => (rule.StartTime == rule.EndTime) || (DateTime.Today + rule.StartTime <= DateTime.Now && DateTime.Now < DateTime.Today + rule.EndTime);
 
         private bool IsInDayOfTheWeek(Rule rule) => rule.DaysOfTheWeek == null || rule.DaysOfTheWeek.Contains(DateTime.Today.DayOfWeek);
 
