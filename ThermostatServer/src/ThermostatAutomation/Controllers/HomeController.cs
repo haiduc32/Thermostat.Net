@@ -34,19 +34,25 @@ namespace ThermostatAutomation.Controllers
                 await collection.InsertOneAsync(settings);
             }
             
-            // Load the last known average temperature
-            // Side thought: we might need to load several settings to make sure we get the telemetry from all areas
-            var telemetryCollection = _db.GetCollection<TelemetryModel>("Telemetry");
+            //// Load the last known average temperature
+            //// Side thought: we might need to load several settings to make sure we get the telemetry from all areas
+            //var telemetryCollection = _db.GetCollection<TelemetryModel>("Telemetry");
 
-            TelemetryModel telemetry = (from t in telemetryCollection.AsQueryable()
-                orderby t.Timestamp descending
-                //where t.RoomTemperature[1].HasValue
-                select t).FirstOrDefault();
+            //TelemetryModel telemetry = (from t in telemetryCollection.AsQueryable()
+            //    orderby t.Timestamp descending
+            //    //where t.RoomTemperature[1].HasValue
+            //    select t).FirstOrDefault();
 
             ViewData["Zones"] = Status.Instance.Zones;
             
             //TODO: show multiple zones in the UI?
             ViewData["HeatingStatus"] = Engine.Instance.Evaluate(0) ? "ON" : "OFF";
+
+            Repository rep = new Repository();
+            var telemetry = rep.GetOneDayTelemetry();
+            telemetry = telemetry.GroupBy(x => x.Timestamp.ToString("MM/dd/yy H:mm")).Select(x => x.Merge()).ToList();
+
+            ViewData["Telemetry"] = telemetry;
 
             return View();
         }

@@ -69,5 +69,16 @@ namespace ThermostatAutomation
             var collection = DB.GetCollection<TelemetryModel>("Telemetry");
             collection.InsertOne(telemetry);
         }
+
+        public List<TelemetryModel> GetOneDayTelemetry()
+        {
+            var collection = DB.GetCollection<TelemetryModel>("Telemetry");
+
+            DateTime lastDay = DateTime.Now.AddDays(-1);
+
+            return (from t in collection.AsQueryable()
+             where t.Timestamp > lastDay
+             select t).ToList();
+        }
     }
 }

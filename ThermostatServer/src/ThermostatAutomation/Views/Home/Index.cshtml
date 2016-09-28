@@ -1,5 +1,13 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
+    List<ThermostatAutomation.Models.TelemetryModel> telemetry = (List<ThermostatAutomation.Models.TelemetryModel>)ViewData["Telemetry"];
+    int i = 0;
+    string chartValues = string.Join(",", telemetry.Select(t => "[" + i++ + "," + t.Zones[1].Temperature + "]"));
+
+    //have to figure out the chart min and max to draw the areas where the heating was on
+    decimal chartMax =Math.Floor (telemetry.Max(x => x.Zones.Max(y => y.Temperature)) ?? 0m) + 1;
+
+    decimal chartMin = Math.Ceiling(telemetry.Min(x => x.Zones.Min(y => y.Temperature)) ?? 1m) -1 ;
 }
 
 @*<div id="myCarousel" class="carousel slide" data-ride="carousel" data-interval="6000">
@@ -87,6 +95,38 @@
     </div>
 </form>
 
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<div id="chart_div"></div>
+
+<script>
+    google.charts.load('current', { packages: ['corechart', 'line'] });
+    google.charts.setOnLoadCallback(drawBasic);
+
+    function drawBasic() {
+
+        var data = new google.visualization.DataTable();
+        data.addColumn('number', 'X');
+        data.addColumn('number', 'Office');
+
+        data.addRows([
+
+            @chartValues
+        ]);
+
+        var options = {
+            hAxis: {
+                title: 'Time'
+            },
+            vAxis: {
+                title: 'Temperature'
+            }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+
+        chart.draw(data, options);
+    }
+</script>
 
 @*<div class="row">
     <div class="col-md-4 col-md-offset-4">

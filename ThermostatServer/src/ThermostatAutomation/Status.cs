@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ThermostatAutomation.Models;
 
 namespace ThermostatAutomation
 {
@@ -24,6 +25,11 @@ namespace ThermostatAutomation
         public decimal? OutsideTemperature { get; set; }
 
         public List<Zone> Zones { get;  } = new List<Zone>();
+
+        /// <summary>
+        /// The heater zones.
+        /// </summary>
+        public List<bool> Channels { get; } = new List<bool>();
 
         public string TargetZone { get; set; }
 
@@ -58,5 +64,12 @@ namespace ThermostatAutomation
         }
 
         public bool VacationMode { get; internal set; }
+
+        public void SaveTelemetry()
+        {
+            TelemetryModel telemetry = new TelemetryModel { Zones = Zones, Channels = Channels, Timestamp = DateTime.Now };
+            Repository rep = new Repository();
+            rep.AddTelemetry(telemetry);
+        }
     }
 }

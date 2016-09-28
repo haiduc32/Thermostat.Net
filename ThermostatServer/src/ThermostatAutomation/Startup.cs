@@ -45,10 +45,14 @@ namespace ThermostatAutomation
             Status.Instance.Settings = settings;
 
             foreach (ChannelSettings channel in settings.Channels)
+            {
+                Status.Instance.Channels.Add(false);
+
                 foreach (string zone in channel.Zones)
                 {
                     Status.Instance.Zones.Add(new Zone { Name = zone });
                 }
+            }
 
             // Set the engine that we want to use
             Engine.SelectedRulesEngine = typeof(RadusRules);

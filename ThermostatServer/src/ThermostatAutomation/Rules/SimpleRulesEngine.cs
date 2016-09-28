@@ -41,6 +41,8 @@ namespace ThermostatAutomation.Rules
 
         public bool Evaluate(int channel)
         {
+            //TODO: to avoid noise-spikes, implement a filter to verify that the trend is raising/falling for a few consecutive readings -> go into the historic data 
+
             // the current version does not have pre-emptive start. ex: if at 6:00 the expected temp
             // is 20* and current is 12*, heating will start only at 6:00, instead of estimating the
             // time to heat and starting the heating in advance.
@@ -57,7 +59,7 @@ namespace ThermostatAutomation.Rules
             Zone activeZone = Status.Instance.Zones.SingleOrDefault(x => x.Name == activeRule.Zone) ??
                 Status.Instance.Zones.FirstOrDefault(x => IsInChannel(x.Name, settings) && !IsStale(x) && x.Temperature.HasValue);
 
-            if (!activeZone.Temperature.HasValue)
+            if (activeZone == null || !activeZone.Temperature.HasValue)
             {
                 //this situation happens when there are absolutely no values
                 // we'll just wait till there are any values.

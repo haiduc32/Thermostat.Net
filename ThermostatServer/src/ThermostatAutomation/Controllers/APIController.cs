@@ -17,10 +17,15 @@ namespace ThermostatAutomation.Controllers
     {
 
         // GET: api/
-        [HttpGet("{zone?}")]
-        public string Get(int zone = 0)
+        [HttpGet("{channel?}")]
+        public string Get(int channel = 0)
         {
-            return Engine.Instance.Evaluate(zone) ? "ON" : "OFF";
+            bool channelStatus = Engine.Instance.Evaluate(channel);
+
+            Status.Instance.Channels[channel] = channelStatus;
+            Status.Instance.SaveTelemetry();
+
+            return channelStatus ? "ON" : "OFF";
         }
 
         //// GET api/values/5
@@ -51,17 +56,11 @@ namespace ThermostatAutomation.Controllers
                 Status.Instance.Zones.Add(value);
             }
 
-            MongoClient _client;
-            IMongoDatabase _db;
-
-            _client = new MongoClient("mongodb://localhost:27017");
-            _db = _client.GetDatabase("Thermostat");
-
-            var collection = _db.GetCollection<TelemetryModel>("Telemetry");
-
-            TelemetryModel telemetry = new TelemetryModel { Zones = Status.Instance.Zones, Timestamp = DateTime.Now };
-            Repository rep = new Repository();
-            rep.AddTelemetry(telemetry);
+            Status.Instance.SaveTelemetry();
+            
+            //TelemetryModel telemetry = new TelemetryModel { Zones = Status.Instance.Zones, Timestamp = DateTime.Now };
+            //Repository rep = new Repository();
+            //rep.AddTelemetry(telemetry);
         }   
 
         //// PUT api/values/5
