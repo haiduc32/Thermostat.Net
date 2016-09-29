@@ -56,7 +56,7 @@ namespace ThermostatAutomation.Rules
             Rule activeRule = Rules.First(rule => IsInTimeInterval(rule) && IsInDayOfTheWeek(rule) && IsInChannel(rule.Zone, settings));
 
             //try to get the temperature for the targeted zone 
-            Zone activeZone = Status.Instance.Zones.SingleOrDefault(x => x.Name == activeRule.Zone) ??
+            Zone activeZone = Status.Instance.Zones.SingleOrDefault(x => x.Name == activeRule.Zone && !IsStale(x) && x.Temperature.HasValue) ??
                 Status.Instance.Zones.FirstOrDefault(x => IsInChannel(x.Name, settings) && !IsStale(x) && x.Temperature.HasValue);
 
             if (activeZone == null || !activeZone.Temperature.HasValue)
@@ -69,7 +69,7 @@ namespace ThermostatAutomation.Rules
             return activeZone.Temperature.Value < activeRule.Temperature;
         }
 
-        private bool IsStale(Zone zone) => !zone.Timestamp.HasValue || zone.Timestamp.Value.AddMinutes(-5) < DateTime.Now;
+        private bool IsStale(Zone zone) => !zone.Timestamp.HasValue || zone.Timestamp.Value < DateTime.Now.AddMinutes(-5);
 
         private bool IsInTimeInterval(Rule rule) => (rule.StartTime == rule.EndTime) || (DateTime.Today + rule.StartTime <= DateTime.Now && DateTime.Now < DateTime.Today + rule.EndTime);
 
