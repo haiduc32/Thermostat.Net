@@ -67,7 +67,7 @@ namespace ThermostatAutomation
 
         public void SaveTelemetry()
         {
-            TelemetryModel telemetry = new TelemetryModel { Zones = Zones, Channels = Channels, Timestamp = DateTime.Now };
+            TelemetryModel telemetry = new TelemetryModel { Zones = Zones.Where(x => !x.Timestamp.IsStale()).ToList(), Channels = Channels, Timestamp = DateTime.Now };
             Repository rep = new Repository();
             rep.AddTelemetry(telemetry);
         }

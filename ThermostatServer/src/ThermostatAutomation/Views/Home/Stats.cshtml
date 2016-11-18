@@ -1,0 +1,156 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+
+    ViewData["Title"] = "Statistics";
+
+    int zoneCount = Status.Instance.Zones.Count;
+
+    List<ThermostatAutomation.Models.TelemetryModel> telemetry = (List<ThermostatAutomation.Models.TelemetryModel>)ViewData["Telemetry"];
+
+    Func<ThermostatAutomation.Models.TelemetryModel, string> f = (t) =>
+    {
+        //return "null,null,null";
+
+        string output = string.Empty;
+        
+        foreach (Zone z in Status.Instance.Zones)
+        {
+            bool found = false;
+
+            for (int i = 0; i < t.Zones.Count; i++)
+            {
+                if (t.Zones[i].Name == z.Name)
+                {
+                    if (!string.IsNullOrEmpty(output))
+                    {
+                        output += ",";
+                    }
+                    output += t.Zones[i].Temperature.HasValue ? t.Zones[i].Temperature.Value.ToString("0,0.00") : "null";
+                    found = true;
+                    continue;
+                }
+            }
+            if (!found)
+            {
+                if (!string.IsNullOrEmpty(output))
+                {
+                    output += ",";
+                }
+                output += "null";
+            }
+        }
+        return output;
+    };
+
+    Func<int, string> fillNulls = (n) =>
+    {
+        string output = string.Empty;
+        for (int i = 0; i < n; i++)
+        {
+            if (i > 0) output += ",";
+            output += "null";
+        }
+        return output;
+    };
+
+    string chartValues = string.Join(",", telemetry.Select(t => "[new Date('" + t.Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "')," + f(t) + ",null]"));
+
+    //have to figure out the chart min and max to draw the areas where the heating was on
+    decimal chartMax = Math.Floor(telemetry.Max(x => x.Zones.Max(y => y.Temperature)) ?? 0m) + 1;
+    decimal chartMin = Math.Ceiling(telemetry.Min(x => x.Zones.Min(y => y.Temperature)) ?? 1m) - 1;
+
+    bool heaterOn = false;
+    for (int i = 0; i < telemetry.Count; i++)
+    {
+        if (telemetry[i].Channels != null && telemetry[i].Channels[0] != heaterOn)
+        {
+            heaterOn = telemetry[i].Channels[0];
+            if (heaterOn)
+            {
+                chartValues += ",[new Date('" + telemetry[i].Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMin + "]";
+                chartValues += ",[new Date('" + telemetry[i].Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMax + "]";
+            }
+            else
+            {
+                chartValues += ",[new Date('" + telemetry[i].Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMax + "]";
+                chartValues += ",[new Date('" + telemetry[i].Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMin + "]";
+            }
+        }
+    }
+
+    if (telemetry.Count > 0)
+    {
+        if (!heaterOn)
+        {
+            chartValues += ",[new Date('" + telemetry.Last().Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMin + "]";
+            chartValues += ",[new Date('" + telemetry.Last().Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMax + "]";
+        }
+        else
+        {
+            chartValues += ",[new Date('" + telemetry.Last().Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMax + "]";
+            chartValues += ",[new Date('" + telemetry.Last().Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMin + "]";
+        }
+    }
+}
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<div id="chart_div"></div>
+
+<script>
+    google.charts.load('current', { packages: ['corechart', 'line'] });
+    google.charts.setOnLoadCallback(drawBasic);
+
+    function drawBasic() {
+
+        var data = new google.visualization.DataTable();
+        data.addColumn('datetime', 'X');
+        @foreach (Zone z in Status.Instance.Zones)
+        {
+            @Html.Raw("data.addColumn('number', '" + z.Name + "');");
+        }
+        //data.addColumn('number', 'Office');
+        data.addColumn('number', 'Heating On');
+
+        data.addRows([
+
+            @Html.Raw(chartValues)
+        ]);
+
+        var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
+        chart.draw(data, {
+            height: 300,
+            //width: 600,
+            series: {
+                @for (int i = 0; i< zoneCount; i++)
+                {
+                     @Html.Raw(i.ToString() + ": {type: 'line'},");
+                }
+                0: {type: 'line'},
+                @zoneCount: {
+                    // area series
+                    type: 'area',
+                    enableInteractivity: false,
+                    lineWidth: 0
+                },
+                //2: {
+                //    // vertical line series
+                //    type: 'line',
+                //    enableInteractivity: false
+                //}
+            },
+            hAxis: {
+                title: 'Time'
+            },
+            vAxis: {
+                title: 'Temperature',
+                viewWindow: {
+                    // you may want to set min/max here, depending on your data and the min/max used for your area and vertical line series
+                    max: @chartMax,
+                    min: @chartMin
+                    }
+            }
+        });
+    }
+</script>

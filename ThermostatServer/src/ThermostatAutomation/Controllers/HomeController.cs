@@ -52,6 +52,45 @@ namespace ThermostatAutomation.Controllers
             var telemetry = rep.GetOneDayTelemetry();
             telemetry = telemetry.GroupBy(x => x.Timestamp.ToString("MM/dd/yy H:mm")).Select(x => x.Merge()).ToList();
 
+            //let's filter the telemetry (better do it on input?)
+            
+            foreach (TelemetryModel t in telemetry)
+            {
+                foreach (Zone z in t.Zones)
+                {
+                    if (z.Temperature.HasValue && (z.Temperature.Value > 30 || z.Temperature.Value < 12))
+                    {
+                        z.Temperature = null;
+                        z.Timestamp = null;
+                    }
+                }
+            }
+
+            ViewData["Telemetry"] = telemetry;
+
+            return View();
+        }
+
+        public IActionResult Stats()
+        {
+            Repository rep = new Repository();
+            var telemetry = rep.GetOneDayTelemetry();
+            telemetry = telemetry.GroupBy(x => x.Timestamp.ToString("MM/dd/yy H:mm")).Select(x => x.Merge()).ToList();
+
+            //let's filter the telemetry (better do it on input?)
+
+            foreach (TelemetryModel t in telemetry)
+            {
+                foreach (Zone z in t.Zones)
+                {
+                    if (z.Temperature.HasValue && (z.Temperature.Value > 30 || z.Temperature.Value < 12))
+                    {
+                        z.Temperature = null;
+                        z.Timestamp = null;
+                    }
+                }
+            }
+
             ViewData["Telemetry"] = telemetry;
 
             return View();

@@ -19,7 +19,8 @@ namespace ThermostatAutomation.Rules
     {
         public RadusRules() : base()
         {
-            //add all the rules here
+            //add all the rules here, rule are evaluated in the order their added:
+            // the first rule that matches will be executed, even if it overrides a rule added later.
             //morning rule
             Rules.Add(new Rule
             {
@@ -27,31 +28,33 @@ namespace ThermostatAutomation.Rules
                 EndTime = new TimeSpan(7, 00, 0),
                 DaysOfTheWeek = WorkingDays,
                 Zone = "Living",
-                Temperature = 23m
+                Temperature = 22m
             });
             //evening rule
             Rules.Add(new Rule
             {
                 StartTime = new TimeSpan(18, 00, 0),
-                EndTime = new TimeSpan(22, 30, 0),
+                EndTime = new TimeSpan(22, 00, 0),
                 DaysOfTheWeek = WorkingDays,
                 Zone = "Office",
-                Temperature = 23.5m
+                Temperature = 22.5m
             });
-            //night rule (applies to all days)
+            //bedtime rule (applies to all days)
             Rules.Add(new Rule
             {
-                StartTime = new TimeSpan(18, 30, 0),
+                StartTime = new TimeSpan(22, 00, 0),
                 EndTime = new TimeSpan(22, 30, 0),
                 Zone = "Bedroom",
                 Temperature = 20m
             });
-            //for the weekend keep it on all the time
+            //for the weekend keep it on all the time (except at night of course..)
             Rules.Add(new Rule
             {
+                StartTime = new TimeSpan(7, 30, 0),
+                EndTime = new TimeSpan(22, 00, 0),
                 DaysOfTheWeek = new List<DayOfWeek> { DayOfWeek.Saturday, DayOfWeek.Sunday },
                 Zone = "Office",
-                Temperature = 23.5m
+                Temperature = 22.5m
             });
 
             // do we need a safety net? if no rule found apply this rule
