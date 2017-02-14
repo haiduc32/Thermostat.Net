@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ThermostatAutomation.Rules;
 using ThermostatAutomation.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace ThermostatAutomation
 {
@@ -76,6 +77,8 @@ namespace ThermostatAutomation
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
+            app.UseOpenIdConnectServer(options => OpenIdConfig.Setup(options));
+
             app.UseApplicationInsightsRequestTelemetry();
 
             if (env.IsDevelopment())
@@ -91,7 +94,16 @@ namespace ThermostatAutomation
             app.UseApplicationInsightsExceptionTelemetry();
 
             app.UseStaticFiles();
-            
+
+            app.UseCookieAuthentication(new CookieAuthenticationOptions()
+            {
+                AuthenticationScheme = "Cookie",
+                LoginPath = new PathString("/Account/Login"),
+                AccessDeniedPath = new PathString("/Account/Forbidden/"),
+                AutomaticAuthenticate = true,
+                AutomaticChallenge = true
+            });
+
             app.UseMvc(routes =>
             {
                 routes.MapRoute(

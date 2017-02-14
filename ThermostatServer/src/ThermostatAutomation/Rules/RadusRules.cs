@@ -17,6 +17,8 @@ namespace ThermostatAutomation.Rules
 {
     public class RadusRules : SimpleRulesEngine
     {
+        const decimal ComfortTemp = 21.5m;
+
         public RadusRules() : base()
         {
             //add all the rules here, rule are evaluated in the order their added:
@@ -28,7 +30,7 @@ namespace ThermostatAutomation.Rules
                 EndTime = new TimeSpan(7, 00, 0),
                 DaysOfTheWeek = WorkingDays,
                 Zone = "Living",
-                Temperature = 22m
+                Temperature = ComfortTemp
             });
             //evening rule
             Rules.Add(new Rule
@@ -37,7 +39,7 @@ namespace ThermostatAutomation.Rules
                 EndTime = new TimeSpan(22, 00, 0),
                 DaysOfTheWeek = WorkingDays,
                 Zone = "Office",
-                Temperature = 22.5m
+                Temperature = ComfortTemp
             });
             //bedtime rule (applies to all days)
             Rules.Add(new Rule
@@ -52,9 +54,9 @@ namespace ThermostatAutomation.Rules
             {
                 StartTime = new TimeSpan(7, 30, 0),
                 EndTime = new TimeSpan(22, 00, 0),
-                DaysOfTheWeek = new List<DayOfWeek> { DayOfWeek.Saturday, DayOfWeek.Sunday },
+                //DaysOfTheWeek = new List<DayOfWeek> { DayOfWeek.Saturday, DayOfWeek.Sunday },
                 Zone = "Office",
-                Temperature = 22.5m
+                Temperature = ComfortTemp
             });
 
             // do we need a safety net? if no rule found apply this rule

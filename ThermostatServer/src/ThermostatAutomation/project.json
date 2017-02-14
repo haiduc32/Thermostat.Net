@@ -19,11 +19,12 @@
     "BundlerMinifier.Core": "2.1.258",
     "Microsoft.AspNetCore.Mvc": "1.0.0",
     "Microsoft.AspNetCore.Server.Kestrel": "1.0.0",
-    "Microsoft.NETCore.App" : {
-
+    "Microsoft.NETCore.App": {
         "version": "1.0.0",
         "type": "platform"
-    }
+    },
+    "Microsoft.AspNetCore.Authentication.Cookies": "1.0.0",
+    "AspNet.Security.OpenIdConnect.Server": "1.0.0-beta7-final"
     },
 
   "tools": {

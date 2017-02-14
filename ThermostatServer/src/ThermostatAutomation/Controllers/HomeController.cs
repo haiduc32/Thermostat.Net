@@ -6,11 +6,13 @@ using Microsoft.AspNetCore.Mvc;
 using ThermostatAutomation.Models;
 using MongoDB.Driver;
 using ThermostatAutomation.Rules;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ThermostatAutomation.Controllers
 {
     public class HomeController : Controller
     {
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             SettingsModel settings;
