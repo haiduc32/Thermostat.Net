@@ -4,6 +4,7 @@ using AspNet.Security.OpenIdConnect.Server;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Authentication;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
@@ -54,7 +55,7 @@ namespace ThermostatAutomation
                 //    string.Equals(context.ClientSecret, "client_secret", StringComparison.Ordinal))
                 string code = context.Request.Code;
 
-                if (string.Equals(code, "1", StringComparison.Ordinal))
+                if (string.Equals(code, Startup.Configuration.GetSection("Account").GetValue<string>("OAuthCode"), StringComparison.Ordinal))
                 {
                     context.Validate();
                 }
@@ -75,7 +76,7 @@ namespace ThermostatAutomation
                     // Using password derivation and time-constant comparer is STRONGLY recommended.
                     string code = context.Request.Code;
 
-                    if (!string.Equals(code, "1", StringComparison.Ordinal))
+                    if (!string.Equals(code, Startup.Configuration.GetSection("Account").GetValue<string>("OAuthCode"), StringComparison.Ordinal))
                     {
                         context.Reject(
                             error: OpenIdConnectConstants.Errors.InvalidGrant,
@@ -95,7 +96,7 @@ namespace ThermostatAutomation
                     //}
 
                     var identity = new ClaimsIdentity(context.Options.AuthenticationScheme);
-                    identity.AddClaim(ClaimTypes.NameIdentifier, "[unique id]");
+                    identity.AddClaim(ClaimTypes.NameIdentifier, Startup.Configuration.GetSection("Account").GetValue<string>("OAuthCode"));
 
                     // By default, claims are not serialized in the access/identity tokens.
                     // Use the overload taking a "destinations" parameter to make sure

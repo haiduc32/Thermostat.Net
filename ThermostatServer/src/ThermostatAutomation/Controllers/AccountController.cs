@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,14 +42,15 @@ namespace ThermostatAutomation.Controllers
             ViewData["ReturnUrl"] = returnUrl;
             if (ModelState.IsValid)
             {
-
-                if (model.User != "haiduc32" || model.Password != "password")
+                string user = Startup.Configuration.GetSection("Account").GetValue<string>("User");
+                string password = Startup.Configuration.GetSection("Account").GetValue<string>("Password");
+                if (model.User != user || model.Password != password)
                 {
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                     return View(model);
                 }
 
-                const string Issuer = "https://haiduc32.go.ro";
+                const string Issuer = "https://mydomain.com";
 
                 var claims = new List<Claim> {
                     new Claim(ClaimTypes.Name, "admin", ClaimValueTypes.String, Issuer)
@@ -59,7 +61,7 @@ namespace ThermostatAutomation.Controllers
                 var userPrincipal = new ClaimsPrincipal(userIdentity);
 
                 //should be some kind of identifier.. we'll just hard code it to 1 and call it a day.
-                string code = "1";
+                string code = Startup.Configuration.GetSection("Account").GetValue<string>("OAuthCode");
 
                 await HttpContext.Authentication.SignInAsync("Cookie", userPrincipal,
                     new AuthenticationProperties
