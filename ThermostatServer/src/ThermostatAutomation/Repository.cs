@@ -80,5 +80,26 @@ namespace ThermostatAutomation
              where t.Timestamp > lastDay
              select t).ToList();
         }
+
+        public void DeleteOverrides(string engineName)
+        {
+            var collection = DB.GetCollection<RuleOverrideModel>("RuleOverride");
+            var filter = Builders<RuleOverrideModel>.Filter.In("EngineName", engineName);
+            DeleteResult result = collection.DeleteMany(filter);
+        }
+
+        public void AddOverride(string engineName, RuleOverrideModel rule)
+        {
+            var collection = DB.GetCollection<RuleOverrideModel>("RuleOverride");
+
+            collection.InsertOne(rule);
+        }
+
+        public List<RuleOverrideModel> GetOverrides(string engineName)
+        {
+            var collection = DB.GetCollection<RuleOverrideModel>("RuleOverride");
+            var filter = Builders<RuleOverrideModel>.Filter.In("EngineName", engineName);
+            return collection.Find(filter).ToList();
+        }
     }
 }

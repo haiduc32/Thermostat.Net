@@ -14,7 +14,7 @@ namespace ThermostatAutomation.Controllers
         private const decimal LowerLimit = 12m;
 
         [HttpGet]
-        public IActionResult Discover()
+        public IActionResult Discover(string accessToken)
         {
             /*
             var appliances = [];
@@ -36,46 +36,59 @@ namespace ThermostatAutomation.Controllers
             */
 
             //TODO: un-hardcode
+            
             List<object> appliances = new List<object>();
 
-            object officeThermostat = new
+            appliances.AddRange(Status.Instance.Zones.Select(x => new
             {
-                applianceId = "1",
-                manufacturerName = "Radu",
+                applianceId = x.Name + "Thermostat",
+                manufacturerName = "Thermosta.Net",
                 modelName = "custom",
                 version = "VER01",
-                friendlyName = "Office thermostat",
-                friendlyDescription = "the thermostat in the office",
+                friendlyName = x.Name + " thermostat",
+                friendlyDescription = "the thermostat in the " + x.Name,
                 isReachable = true,
                 actions = new List<string> { "setTargetTemperature", "incrementTargetTemperature", "decrementTargetTemperature" }
-            };
-            appliances.Add(officeThermostat);
+            }));
 
-            object bedroomThermostat = new
-            {
-                applianceId = "2",
-                manufacturerName = "Radu",
-                modelName = "custom",
-                version = "VER01",
-                friendlyName = "Bedroom thermostat",
-                friendlyDescription = "the thermostat in the bedroom",
-                isReachable = true,
-                actions = new List<string> { "setTargetTemperature", "incrementTargetTemperature", "decrementTargetTemperature" }
-            };
-            appliances.Add(bedroomThermostat);
+            //object officeThermostat = new
+            //{
+            //    applianceId = "1",
+            //    manufacturerName = "Radu",
+            //    modelName = "custom",
+            //    version = "VER01",
+            //    friendlyName = "Office thermostat",
+            //    friendlyDescription = "the thermostat in the office",
+            //    isReachable = true,
+            //    actions = new List<string> { "setTargetTemperature", "incrementTargetTemperature", "decrementTargetTemperature" }
+            //};
+            //appliances.Add(officeThermostat);
 
-            object heating = new
-            {
-                applianceId = "3",
-                manufacturerName = "Radu",
-                modelName = "custom",
-                version = "VER01",
-                friendlyName = "Heating",
-                friendlyDescription = "home heating",
-                isReachable = true,
-                actions = new List<string> { "turnOn", "turnOff" }
-            };
-            appliances.Add(heating);
+            //object bedroomThermostat = new
+            //{
+            //    applianceId = "2",
+            //    manufacturerName = "Radu",
+            //    modelName = "custom",
+            //    version = "VER01",
+            //    friendlyName = "Bedroom thermostat",
+            //    friendlyDescription = "the thermostat in the bedroom",
+            //    isReachable = true,
+            //    actions = new List<string> { "setTargetTemperature", "incrementTargetTemperature", "decrementTargetTemperature" }
+            //};
+            //appliances.Add(bedroomThermostat);
+
+            //object heating = new
+            //{
+            //    applianceId = "3",
+            //    manufacturerName = "Radu",
+            //    modelName = "custom",
+            //    version = "VER01",
+            //    friendlyName = "Heating",
+            //    friendlyDescription = "home heating",
+            //    isReachable = true,
+            //    actions = new List<string> { "turnOn", "turnOff" }
+            //};
+            //appliances.Add(heating);
 
             return Ok(appliances);
         }

@@ -10,13 +10,17 @@ using Microsoft.Extensions.Logging;
 using ThermostatAutomation.Rules;
 using ThermostatAutomation.Models;
 using Microsoft.AspNetCore.Http;
+using ThermostatAutomation.Middleware;
 
 namespace ThermostatAutomation
 {
     public class Startup
     {
+        
+
         public Startup(IHostingEnvironment env)
-        {
+        { 
+
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -28,6 +32,8 @@ namespace ThermostatAutomation
                 // This will push telemetry data through Application Insights pipeline faster, allowing you to view results immediately.
                 builder.AddApplicationInsightsSettings(developerMode: true);
             }
+            
+
             Configuration = builder.Build();
 
             // Load the settings
@@ -40,7 +46,10 @@ namespace ThermostatAutomation
                 Status.Instance.VacationMode = settingsDb.VacationMode;
             }
             
-            var config = builder.Build();
+            var config = Configuration;
+
+            
+
             Settings settings = new Settings();
             config.GetSection("Thermostat").Bind(settings);
             Status.Instance.Settings = settings;
@@ -54,9 +63,11 @@ namespace ThermostatAutomation
                     Status.Instance.Zones.Add(new Zone { Name = zone });
                 }
             }
-
+            
             // Set the engine that we want to use
             Engine.SelectedRulesEngine = typeof(RadusRules);
+
+            Engine.Repository = r;
         }
 
         // ugly, I know
@@ -78,8 +89,11 @@ namespace ThermostatAutomation
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
-            app.UseOpenIdConnectServer(options => OpenIdConfig.Setup(options));
+            app.UseMiddleware<MyMiddleware>();
 
+            ///
+            //app.UseOpenIdConnectServer(options => OpenIdConfig.Setup(options));
+            
             app.UseApplicationInsightsRequestTelemetry();
 
             if (env.IsDevelopment())

@@ -12,6 +12,8 @@ namespace ThermostatAutomation.Rules
 
         public static Type SelectedRulesEngine { get; set; }
 
+        public static Repository Repository { get; set; }
+
         public static IRulesEngine Instance
         {
             get
@@ -28,11 +30,14 @@ namespace ThermostatAutomation.Rules
                             }
 
                             _rulesEngine = (IRulesEngine)Activator.CreateInstance(SelectedRulesEngine);
+
+                            _rulesEngine.Repository = Repository;
+                            _rulesEngine.Initialize();
                         }
                     }
                 }
                 return _rulesEngine;
             }
-        } 
+        }
     }
 }

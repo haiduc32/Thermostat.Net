@@ -18,17 +18,18 @@ namespace ThermostatAutomation
     {
         public static void Setup(OpenIdConnectServerOptions options)
         {
-            options.TokenEndpointPath = "/api/oauth/accesstoken";
+            options.TokenEndpointPath = "/oauth/accesstoken";
             options.AuthorizationEndpointPath = "/account/Login";
             options.AllowInsecureHttp = true;
             options.ApplicationCanDisplayErrors = true;
-            
 
             byte[] securityKey = System.Text.Encoding.UTF8.GetBytes("My very secret key that must be taken fro mthe config.");
             options.SigningCredentials.AddKey(new SymmetricSecurityKey(securityKey));
 
+
             // Implement OnValidateTokenRequest to support flows using the token endpoint.
-            options.Provider.OnValidateTokenRequest = context => {
+            options.Provider.OnValidateTokenRequest = context =>
+            {
                 // Reject token requests that don't use grant_type=password or grant_type=refresh_token.
                 if (!context.Request.IsAuthorizationCodeGrantType()/*.IsPasswordGrantType()*/ && !context.Request.IsRefreshTokenGrantType())
                 {

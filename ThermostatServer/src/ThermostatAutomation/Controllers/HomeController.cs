@@ -7,6 +7,7 @@ using ThermostatAutomation.Models;
 using MongoDB.Driver;
 using ThermostatAutomation.Rules;
 using Microsoft.AspNetCore.Authorization;
+using ThermostatAutomation.Extensions;
 
 namespace ThermostatAutomation.Controllers
 {

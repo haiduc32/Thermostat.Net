@@ -10,12 +10,9 @@ using ThermostatAutomation.Rules;
 
 namespace ThermostatAutomation.Controllers
 {
-    
-
     [Route("api")]
     public class APIController : Controller
     {
-
         // GET: api/
         [HttpGet("{channel?}")]
         public string Get(int channel = 0)
@@ -27,13 +24,6 @@ namespace ThermostatAutomation.Controllers
 
             return channelStatus ? "ON" : "OFF";
         }
-
-        //// GET api/values/5
-        //[HttpGet("{id}")]
-        //public string Get(int id)
-        //{
-        //    return "value";
-        //}
 
         // POST api/values
         /// <summary>
@@ -57,22 +47,6 @@ namespace ThermostatAutomation.Controllers
             }
 
             Status.Instance.SaveTelemetry();
-            
-            //TelemetryModel telemetry = new TelemetryModel { Zones = Status.Instance.Zones, Timestamp = DateTime.Now };
-            //Repository rep = new Repository();
-            //rep.AddTelemetry(telemetry);
-        }   
-
-        //// PUT api/values/5
-        //[HttpPut("{id}")]
-        //public void Put(int id, [FromBody]string value)
-        //{
-        //}
-
-        //// DELETE api/values/5
-        //[HttpDelete("{id}")]
-        //public void Delete(int id)
-        //{
-        //}
+        }
     }
 }
