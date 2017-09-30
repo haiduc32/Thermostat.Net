@@ -20,6 +20,8 @@ namespace ThermostatAutomation.Rules
         ///// </summary>
         //decimal CurrentTargetTemperature { get; }
 
+        decimal? GetTargetTemperatureInZone(string zoneName);
+
         decimal OverrideTargetTemperatureInZone(string zoneName, decimal targetTemperature);
 
         /// <summary>

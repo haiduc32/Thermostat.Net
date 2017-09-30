@@ -1,18 +1,30 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using ThermostatAutomation.Configuration;
 using ThermostatAutomation.Models;
 
 namespace ThermostatAutomation.Controllers
 {
     public class AccountController : Controller
     {
+        private AccountSettings _accountSettings;
+        private OAuthCodeStore _codeStore;
+
+        public AccountController(IOptions<AccountSettings> accountSettings, OAuthCodeStore codeStore)
+        {
+            _accountSettings = accountSettings.Value;
+            _codeStore = codeStore;
+        }
+
         [HttpGet]
         [AllowAnonymous]
         public IActionResult Login(string returnUrl = null, string state = null, string client_id = null, string response_type = null, string scope = null, string redirect_uri = null)
@@ -42,8 +54,8 @@ namespace ThermostatAutomation.Controllers
             ViewData["ReturnUrl"] = returnUrl;
             if (ModelState.IsValid)
             {
-                string user = Startup.Configuration.GetSection("Account").GetValue<string>("User");
-                string password = Startup.Configuration.GetSection("Account").GetValue<string>("Password");
+                string user = _accountSettings.User;
+                string password = _accountSettings.Password;
                 if (model.User != user || model.Password != password)
                 {
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
@@ -60,15 +72,15 @@ namespace ThermostatAutomation.Controllers
 
                 var userPrincipal = new ClaimsPrincipal(userIdentity);
 
-                //should be some kind of identifier.. we'll just hard code it to 1 and call it a day.
-                string code = Startup.Configuration.GetSection("Account").GetValue<string>("OAuthCode");
+                // we hardcoded alexa but maybe it is not the best idea..
+                string code = _codeStore.GenerateCode("Alexa");
 
-                await HttpContext.Authentication.SignInAsync("Cookie", userPrincipal,
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, userPrincipal,
                     new AuthenticationProperties
                     {
                         ExpiresUtc = DateTime.UtcNow.AddMinutes(20),
-                        IsPersistent = false,
-                        AllowRefresh = false
+                        IsPersistent = true,
+                        AllowRefresh = true
                     });
 
                 if (!string.IsNullOrEmpty(returnUrl))

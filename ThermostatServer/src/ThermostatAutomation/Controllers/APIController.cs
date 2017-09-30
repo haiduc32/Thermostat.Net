@@ -13,14 +13,21 @@ namespace ThermostatAutomation.Controllers
     [Route("api")]
     public class APIController : Controller
     {
+        Engine _engine;
+
+        public APIController(Engine engine)
+        {
+            _engine = engine;
+        }
+
+
         // GET: api/
         [HttpGet("{channel?}")]
         public string Get(int channel = 0)
         {
-            bool channelStatus = Engine.Instance.Evaluate(channel);
+            bool channelStatus = _engine.Rules.Evaluate(channel);
 
             Status.Instance.Channels[channel] = channelStatus;
-            Status.Instance.SaveTelemetry();
 
             return channelStatus ? "ON" : "OFF";
         }
@@ -31,7 +38,7 @@ namespace ThermostatAutomation.Controllers
         /// </summary>
         /// <param name="value">Values come by the region index.</param>
         [HttpPost("temperature")]
-        public async void Post([FromBody]Zone value)
+        public void Post([FromBody]Zone value)
         {
             Zone r = Status.Instance.Zones.SingleOrDefault(x => x.Name == value.Name);
 
@@ -45,8 +52,6 @@ namespace ThermostatAutomation.Controllers
                 value.Timestamp = DateTime.Now;
                 Status.Instance.Zones.Add(value);
             }
-
-            Status.Instance.SaveTelemetry();
         }
     }
 }

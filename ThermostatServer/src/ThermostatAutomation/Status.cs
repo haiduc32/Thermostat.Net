@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ThermostatAutomation.Configuration;
 using ThermostatAutomation.Extensions;
 using ThermostatAutomation.Models;
 
@@ -32,14 +33,9 @@ namespace ThermostatAutomation
         /// </summary>
         public List<bool> Channels { get; } = new List<bool>();
 
-        public string TargetZone { get; set; }
-
-        /// <summary>
-        /// By default TargetTemperature is set to 12 deg Celsius.
-        /// </summary>
-        public decimal TargetTemperature { get; set; } = 12;
-
         public Settings Settings { get; set; }
+
+        public EnabledRules Rules { get; set; }
 
         public static Status Instance
         {
@@ -64,13 +60,17 @@ namespace ThermostatAutomation
             }
         }
 
-        public bool VacationMode { get; internal set; }
-
-        public void SaveTelemetry()
+        public async Task SaveTelemetryAsync()
         {
-            TelemetryModel telemetry = new TelemetryModel { Zones = Zones.Where(x => !x.Timestamp.IsStale()).ToList(), Channels = Channels, Timestamp = DateTime.Now };
+            TelemetryModel telemetry = new TelemetryModel
+            {
+                Zones = Zones.Where(x => !x.Timestamp.IsStale()).ToList(),
+                Channels = Channels,
+                Timestamp = DateTime.Now
+            };
+
             Repository rep = new Repository();
-            rep.AddTelemetry(telemetry);
+            await rep.AddTelemetryAsync(telemetry);
         }
     }
 }

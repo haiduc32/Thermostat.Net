@@ -530,3 +530,17 @@ function generateControlError(name, code, description) {
 
     return result;
 }
+
+function generateBridgeOfflineError() {
+    {
+        "header":{
+            "namespace":"Alexa.ConnectedHome.Control",
+                "name":"BridgeOfflineError",
+                    "payloadVersion":"2",
+                        "messageId":"49f72397-858f-41cb-a7d3-b8cfa4c5fd0f"
+        },
+        "payload":{
+        }
+    }
+
+}

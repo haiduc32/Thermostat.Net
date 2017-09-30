@@ -1,11 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ThermostatAutomation.Configuration;
+using ThermostatAutomation.Rules;
 
 namespace ThermostatAutomation.Controllers
 {
+    [AlexaOAuth]
     public class AlexaController : Controller
     {
         //values below or above the limit will be ignored
@@ -13,30 +17,16 @@ namespace ThermostatAutomation.Controllers
 
         private const decimal LowerLimit = 12m;
 
+        private Engine _engine;
+
+        public AlexaController(Engine engine)
+        {
+            _engine = engine;
+        }
+
         [HttpGet]
         public IActionResult Discover(string accessToken)
         {
-            /*
-            var appliances = [];
-
-            var applianceDiscovered = {
-                applianceId: 'e145-4062-b31d-7ec2c146c5ea',
-                manufacturerName: 'DummyInfo',
-                modelName: 'ST01',
-                version: 'VER01',
-                friendlyName: 'Dummy light',
-                friendlyDescription: 'the light in kitchen',
-                isReachable: true,
-                additionalApplianceDetails: {
-            
-                    'fullApplianceId': '2cd6b650-e145-4062-b31d-7ec2c146c5ea'
-                }
-            };
-            appliances.push(applianceDiscovered);
-            */
-
-            //TODO: un-hardcode
-            
             List<object> appliances = new List<object>();
 
             appliances.AddRange(Status.Instance.Zones.Select(x => new
@@ -48,47 +38,22 @@ namespace ThermostatAutomation.Controllers
                 friendlyName = x.Name + " thermostat",
                 friendlyDescription = "the thermostat in the " + x.Name,
                 isReachable = true,
-                actions = new List<string> { "setTargetTemperature", "incrementTargetTemperature", "decrementTargetTemperature" }
+                actions = new List<string> { "setTargetTemperature", "getTargetTemperature", "getTemperatureReading", "incrementTargetTemperature", "decrementTargetTemperature" },
+                applianceTypes = new List<string> { "THERMOSTAT" }
             }));
 
-            //object officeThermostat = new
-            //{
-            //    applianceId = "1",
-            //    manufacturerName = "Radu",
-            //    modelName = "custom",
-            //    version = "VER01",
-            //    friendlyName = "Office thermostat",
-            //    friendlyDescription = "the thermostat in the office",
-            //    isReachable = true,
-            //    actions = new List<string> { "setTargetTemperature", "incrementTargetTemperature", "decrementTargetTemperature" }
-            //};
-            //appliances.Add(officeThermostat);
-
-            //object bedroomThermostat = new
-            //{
-            //    applianceId = "2",
-            //    manufacturerName = "Radu",
-            //    modelName = "custom",
-            //    version = "VER01",
-            //    friendlyName = "Bedroom thermostat",
-            //    friendlyDescription = "the thermostat in the bedroom",
-            //    isReachable = true,
-            //    actions = new List<string> { "setTargetTemperature", "incrementTargetTemperature", "decrementTargetTemperature" }
-            //};
-            //appliances.Add(bedroomThermostat);
-
-            //object heating = new
-            //{
-            //    applianceId = "3",
-            //    manufacturerName = "Radu",
-            //    modelName = "custom",
-            //    version = "VER01",
-            //    friendlyName = "Heating",
-            //    friendlyDescription = "home heating",
-            //    isReachable = true,
-            //    actions = new List<string> { "turnOn", "turnOff" }
-            //};
-            //appliances.Add(heating);
+            appliances.Add(Status.Instance.Rules.Select(x => new
+            {
+                applianceId = x.ClassName + "Engine",
+                manufacturerName = "Thermosta.Net",
+                modelName = "custom",
+                version = "VER01",
+                friendlyName = x.FriendlyName,
+                friendlyDescription = x.FriendlyName,
+                isReachable = true,
+                actions = new List<string> { "turnOn"/*, "turnOff"*/ }, // we don't need to turn it off as we only switch between different engines
+                applianceTypes = new List<string> { "SCENE_TRIGGER" }
+            }));
 
             return Ok(appliances);
         }
@@ -96,9 +61,10 @@ namespace ThermostatAutomation.Controllers
         [HttpGet]
         public IActionResult On(string applianceId, string accessToken)
         {
-            if (accessToken != "atoken")
+            RuleItem rulesEngine = Status.Instance.Rules.Single(x => applianceId == x.ClassName);
+            if (rulesEngine != null)
             {
-                return Forbid();
+                _engine.Enable(rulesEngine.ClassName);
             }
 
             return Ok();
@@ -107,32 +73,22 @@ namespace ThermostatAutomation.Controllers
         [HttpGet]
         public IActionResult Off(string applianceId, string accessToken)
         {
-            if (accessToken != "atoken")
-            {
-                return Forbid();
-            }
-
-            return Ok();
+            // not sure if we need it at all, as we don't have anything to turn off at the moment
+            return BadRequest();
         }
 
         [HttpGet]
         public IActionResult SetTemp(string applianceId, string accessToken, decimal temp)
         {
-            if (accessToken != "atoken")
-            {
-                return Forbid();
-            }
+            string zone = applianceId.Substring(0, applianceId.IndexOf("Thermostat"));
 
-            if (temp < LowerLimit || temp > UpperLimit)
-            {
-                //TODO: return a bad response
-            }
+            decimal setTemperature = _engine.Rules.OverrideTargetTemperatureInZone(zone, temp);
 
             object response = new
             {
                 targetTemperature = new
                 {
-                    value = 21.0
+                    value = setTemperature
                 },
                 mode = new
                 {
@@ -146,61 +102,50 @@ namespace ThermostatAutomation.Controllers
         [HttpGet]
         public IActionResult IncTemp(string applianceId, string accessToken, decimal delta)
         {
-            if (accessToken != "atoken")
-            {
-                return Forbid();
-            }
-
-            object response = new
-            {
-                previousState = new
-                {
-                    targetTemperature = new
-                    {
-                        value = 21.0
-                    },
-                    mode = new
-                    {
-                        value = "AUTO"
-                    }
-                },
-                targetTemperature = new
-                {
-                    value = 21m + delta
-                }
-            };
-
-            return Ok(response);
+            return OffsetTemperature(applianceId, delta);
         }
 
         [HttpGet]
         public IActionResult DecTemp(string applianceId, string accessToken, decimal delta)
         {
-            if (accessToken != "atoken")
-            {
-                return Forbid();
-            }
+            return OffsetTemperature(applianceId, -delta);
+        }
 
-            object response = new
+        private IActionResult OffsetTemperature(string applianceId, decimal delta)
+        {
+            string zone = applianceId.Substring(0, applianceId.IndexOf("Thermostat"));
+            decimal? currentTemperature = _engine.Rules.GetTargetTemperatureInZone(zone);
+
+            if (currentTemperature.HasValue)
             {
-                previousState = new
+                decimal newTemperature = _engine.Rules.OverrideTargetTemperatureInZone(zone, currentTemperature.Value + delta);
+
+                object response = new
                 {
+                    previousState = new
+                    {
+                        targetTemperature = new
+                        {
+                            value = currentTemperature.Value
+                        },
+                        mode = new
+                        {
+                            value = "AUTO"
+                        }
+                    },
                     targetTemperature = new
                     {
-                        value = 21.0
-                    },
-                    mode = new
-                    {
-                        value = "AUTO"
+                        value = newTemperature
                     }
-                },
-                targetTemperature = new
-                {
-                    value = 21m - delta
-                }
-            };
+                };
 
-            return Ok(response);
+                return Ok(response);
+            }
+            else
+            {
+                //TODO: some error?
+                return Ok();
+            }
         }
     }
 }

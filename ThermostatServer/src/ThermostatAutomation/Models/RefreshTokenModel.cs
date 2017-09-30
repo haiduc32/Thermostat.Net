@@ -7,10 +7,12 @@ using System.Threading.Tasks;
 namespace ThermostatAutomation.Models
 {
     [BsonIgnoreExtraElements]
-    public class SettingsModel
+    public class RefreshTokenModel
     {
         public MongoDB.Bson.ObjectId _id { get; set; }
 
-        public string ActiveEngine { get; set; }
+        public string Token { get; set; }
+
+        public string Application { get; set; }
     }
 }

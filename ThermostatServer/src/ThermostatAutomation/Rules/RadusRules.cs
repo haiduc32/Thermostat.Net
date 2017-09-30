@@ -36,7 +36,7 @@ namespace ThermostatAutomation.Rules
             //morning rule
             Rules.Add(new Rule("Morning")
             {
-                StartTime = new TimeSpan(6, 15, 0),
+                StartTime = new TimeSpan(5, 30, 0),
                 EndTime = new TimeSpan(7, 00, 0),
                 DaysOfTheWeek = WorkingDays,
                 Zone = "Living",

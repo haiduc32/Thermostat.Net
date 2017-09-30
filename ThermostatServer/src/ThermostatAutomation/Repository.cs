@@ -64,10 +64,10 @@ namespace ThermostatAutomation
             collection.ReplaceOne(emptyFilter, settings);
         }
 
-        public void AddTelemetry(TelemetryModel telemetry)
+        public async Task AddTelemetryAsync(TelemetryModel telemetry)
         {
             var collection = DB.GetCollection<TelemetryModel>("Telemetry");
-            collection.InsertOne(telemetry);
+            await collection.InsertOneAsync(telemetry);
         }
 
         public List<TelemetryModel> GetOneDayTelemetry()
@@ -84,22 +84,50 @@ namespace ThermostatAutomation
         public void DeleteOverrides(string engineName)
         {
             var collection = DB.GetCollection<RuleOverrideModel>("RuleOverride");
-            var filter = Builders<RuleOverrideModel>.Filter.In("EngineName", engineName);
+            var filter = Builders<RuleOverrideModel>.Filter.Eq("EngineName", engineName);
             DeleteResult result = collection.DeleteMany(filter);
         }
 
         public void AddOverride(string engineName, RuleOverrideModel rule)
         {
             var collection = DB.GetCollection<RuleOverrideModel>("RuleOverride");
-
-            collection.InsertOne(rule);
+            
+            var engineNameFilter = Builders<RuleOverrideModel>.Filter.Eq("EngineName", engineName);
+            var ruleNameFilter = Builders<RuleOverrideModel>.Filter.Eq("RuleName", rule.RuleName);
+            var filter = Builders<RuleOverrideModel>.Filter.And(engineNameFilter, ruleNameFilter);
+            
+            //add or update
+            collection.ReplaceOne(filter, rule, new UpdateOptions { IsUpsert = true });
         }
 
         public List<RuleOverrideModel> GetOverrides(string engineName)
         {
             var collection = DB.GetCollection<RuleOverrideModel>("RuleOverride");
-            var filter = Builders<RuleOverrideModel>.Filter.In("EngineName", engineName);
-            return collection.Find(filter).ToList();
+
+            var result = (from o in collection.AsQueryable()
+                          where o.EngineName == engineName
+                          select o).ToList();
+
+            //var filter = Builders<RuleOverrideModel>.Filter.In("EngineName", engineName);
+
+            //return collection.Find(filter).ToList();
+            return result;
+        }
+
+        public async Task AddRefreshToken(RefreshTokenModel token)
+        {
+            var collection = DB.GetCollection<RefreshTokenModel>("RefreshToken");
+            await collection.InsertOneAsync(token);
+        }
+
+        public async Task<RefreshTokenModel> GetRefreshToken(string tokenValue)
+        {
+            var collection = DB.GetCollection<RefreshTokenModel>("RefreshToken");
+
+            var filter = Builders<RefreshTokenModel>.Filter.Eq("Token", tokenValue);
+            var r = await collection.FindAsync(filter);
+            RefreshTokenModel result = await r.SingleOrDefaultAsync();
+            return result;
         }
     }
 }

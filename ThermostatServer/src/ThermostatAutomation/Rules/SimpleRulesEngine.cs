@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ThermostatAutomation.Configuration;
 using ThermostatAutomation.Extensions;
 using ThermostatAutomation.Models;
 
@@ -104,9 +105,12 @@ namespace ThermostatAutomation.Rules
 
         public decimal OverrideTargetTemperatureInZone(string zoneName, decimal targetTemperature)
         {
-            //settings are detected based on teh zone that is overriden
+            //settings are detected based on the zone that is overriden
             ChannelSettings settings = Status.Instance.Settings.Channels.SingleOrDefault(x => x.Zones.Contains(zoneName));
             Rule activeRule = ActiveRule(settings);
+
+            //ensure the temperature is valid, and override it if not
+            targetTemperature = ValidateTemperature(targetTemperature);
 
             activeRule.Zone = zoneName;
             activeRule.Temperature = targetTemperature;
@@ -120,6 +124,14 @@ namespace ThermostatAutomation.Rules
             });
 
             return targetTemperature;
+        }
+
+        public decimal? GetTargetTemperatureInZone(string zoneName)
+        {
+            ChannelSettings settings = Status.Instance.Settings.Channels.SingleOrDefault(x => x.Zones.Contains(zoneName));
+            Rule activeRule = ActiveRule(settings);
+
+            return activeRule.Temperature;
         }
 
         public void ResetRules()
@@ -139,8 +151,6 @@ namespace ThermostatAutomation.Rules
 
             return temperature;
         }
-
-        //private bool IsStale(Zone zone) => !zone.Timestamp.HasValue || zone.Timestamp.Value < DateTime.Now.AddMinutes(-5);
 
         private bool IsInTimeInterval(Rule rule) => (rule.StartTime == rule.EndTime) || (DateTime.Today + rule.StartTime <= DateTime.Now && DateTime.Now < DateTime.Today + rule.EndTime);
 
