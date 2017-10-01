@@ -28,5 +28,7 @@ namespace ThermostatAutomation.Rules
         /// Resets the overrides. The default rules will take power.
         /// </summary>
         void ResetRules();
+
+        string GetActiveZone(int channel);
     }
 }

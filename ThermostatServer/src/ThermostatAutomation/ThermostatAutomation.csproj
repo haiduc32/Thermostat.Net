@@ -46,6 +46,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Alexav3\AlexaV3.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <WCFMetadata Include="Service References" />
   </ItemGroup>
 

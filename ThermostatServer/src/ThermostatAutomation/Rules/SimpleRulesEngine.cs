@@ -134,6 +134,13 @@ namespace ThermostatAutomation.Rules
             return activeRule.Temperature;
         }
 
+        public string GetActiveZone(int channel)
+        {
+            ChannelSettings settings = Status.Instance.Settings.Channels.SingleOrDefault(x => x.Number == channel.ToString());
+            Rule activeRule = ActiveRule(settings);
+            return activeRule.Zone;
+        }
+
         public void ResetRules()
         {
             Repository.DeleteOverrides(Name);

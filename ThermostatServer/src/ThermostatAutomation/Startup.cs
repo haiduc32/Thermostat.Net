@@ -122,7 +122,11 @@ namespace ThermostatAutomation
             // Add framework services.
             services.AddApplicationInsightsTelemetry(_configuration);
 
-            services.AddMvc();
+            services.AddMvc().AddJsonOptions(options =>
+            {
+                //options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+                options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+            });
             //services.Configure<IISOptions>( options => options.)
 
             services.AddAuthorization(options =>
