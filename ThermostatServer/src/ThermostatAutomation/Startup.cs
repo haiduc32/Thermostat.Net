@@ -18,6 +18,7 @@ using NLog.Extensions.Logging;
 using ThermostatAutomation.Configuration;
 using Newtonsoft.Json;
 using ThermostatAutomation.Controllers;
+using Polly;
 
 namespace ThermostatAutomation
 {
@@ -52,14 +53,22 @@ namespace ThermostatAutomation
 
             // Load the settings
             Repository r = new Repository();
-            SettingsModel settingsDb = r.GetSettings();
-            if (settingsDb != null) 
-            {
-                //Status.Instance.TargetZone = settingsDb.TargetZone;
-                //Status.Instance.TargetTemperature = settingsDb.TargetTemperature;
-                //Status.Instance.VacationMode = settingsDb.VacationMode;
-            }
+            SettingsModel settingsDb = null;
             
+            
+
+            var retryPolicy = Policy
+              .Handle<Exception>()
+              .WaitAndRetry(new[]
+              {
+                            TimeSpan.FromSeconds(30),
+                            TimeSpan.FromMinutes(1),
+                            TimeSpan.FromMinutes(2),
+                            TimeSpan.FromMinutes(4)
+              });
+
+            retryPolicy.Execute(() => settingsDb = r.GetSettings());
+
             var config = _configuration;
 
             EnabledRules rules = new EnabledRules();
@@ -84,7 +93,8 @@ namespace ThermostatAutomation
 
             string selectedEnginename = settingsDb?.ActiveEngine ?? rules.Default?.ClassName;
             //TODO: if null throw an error and shutdown gracefully, or fallback to some default?
-            
+
+
 
             // Set the engine that we want to use
             //_engine.SelectedRulesEngine = engineType;
@@ -167,6 +177,39 @@ namespace ThermostatAutomation
 
             // Add our BackgroundService which will be saving telemetry at regular intervals
             services.AddSingleton<IHostedService, BackgroundService>();
+
+            // Note .AddMiniProfiler() returns a IMiniProfilerBuilder for easy intellisense
+            services.AddMiniProfiler(options =>
+            {
+                // All of this is optional. You can simply call .AddMiniProfiler() for all defaults
+
+                // (Optional) Path to use for profiler URLs, default is /mini-profiler-resources
+                options.RouteBasePath = "/profiler";
+
+                // (Optional) Control storage
+                // (default is 30 minutes in MemoryCacheStorage)
+                //(options.Storage as MemoryCacheStorage).CacheDuration = TimeSpan.FromMinutes(60);
+
+                // (Optional) Control which SQL formatter to use, InlineFormatter is the default
+                options.SqlFormatter = new StackExchange.Profiling.SqlFormatters.InlineFormatter();
+
+                // (Optional) To control authorization, you can use the Func<HttpRequest, bool> options:
+                // (default is everyone can access profilers)
+                //options.ResultsAuthorize = request => MyGetUserFunction(request).CanSeeMiniProfiler;
+                //options.ResultsListAuthorize = request => MyGetUserFunction(request).CanSeeMiniProfiler;
+
+                // (Optional)  To control which requests are profiled, use the Func<HttpRequest, bool> option:
+                // (default is everything should be profiled)
+                //options.ShouldProfile = request => MyShouldThisBeProfiledFunction(request);
+
+                // (Optional) Profiles are stored under a user ID, function to get it:
+                // (default is null, since above methods don't use it by default)
+                //options.UserIdProvider = request => MyGetUserIdFunction(request);
+
+                // (Optional) Swap out the entire profiler provider, if you want
+                // (default handles async and works fine for almost all appliations)
+                //options.ProfilerProvider = new MyProfilerProvider();
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -213,6 +256,8 @@ namespace ThermostatAutomation
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
+
+            app.UseMiniProfiler();
         }
     }
 }

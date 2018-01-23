@@ -64,7 +64,7 @@ namespace ThermostatAutomation.Rules
             {
                 StartTime = new TimeSpan(7, 30, 0),
                 EndTime = new TimeSpan(22, 00, 0),
-                //DaysOfTheWeek = new List<DayOfWeek> { DayOfWeek.Saturday, DayOfWeek.Sunday },
+                DaysOfTheWeek = new List<DayOfWeek> { DayOfWeek.Saturday, DayOfWeek.Sunday },
                 Zone = "Office",
                 Temperature = ComfortTemp
             });

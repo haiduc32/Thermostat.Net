@@ -7,5 +7,6 @@ namespace AlexaV3.Constants
     public static class DisplayCategories
     {
         public const string Thermostat = "THERMOSTAT";
+        public const string ActivityTrigger = "ActivityTrigger";
     }
 }

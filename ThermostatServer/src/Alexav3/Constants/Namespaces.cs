@@ -8,6 +8,8 @@ namespace AlexaV3.Constants
     {
         public const string Discovery = "Alexa.Discovery";
         public const string Thermostat = "Alexa.ThermostatController";
+        public const string EndpointHealth = "Alexa.EndpointHealth";
+        public const string SceneController = "Alexa.SceneController";
 
         public const string Alexa = "Alexa";
     }

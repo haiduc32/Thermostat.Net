@@ -20,5 +20,10 @@ namespace AlexaV3
         /// Indicates whether the properties listed for this endpoint can be retrieved for state reporting.
         /// </summary>
         public bool Retrievable { get; set; }
+
+        /// <summary>
+        /// Used in the Scenes.
+        /// </summary>
+        public bool SupportsDeactivation { get; set; }
     }
 }

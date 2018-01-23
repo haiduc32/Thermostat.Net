@@ -9,22 +9,27 @@ using ThermostatAutomation.Rules;
 using Microsoft.AspNetCore.Authorization;
 using ThermostatAutomation.Extensions;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Diagnostics;
+using Microsoft.Extensions.Logging;
+using ThermostatAutomation.Configuration;
 
 namespace ThermostatAutomation.Controllers
 {
     public class HomeController : Controller
     {
-        Engine _engine;
+        private Engine _engine;
+        private ILogger<HomeController> _logger;
 
-        public HomeController(Engine engine)
+        public HomeController(Engine engine, ILogger<HomeController> logger)
         {
             _engine = engine;
+            _logger = logger;
         }
 
         [Authorize]
         public async Task<IActionResult> Index()
         {
-            SettingsModel settings;
+            //SettingsModel settings;
 
             MongoClient _client;
             IMongoDatabase _db;
@@ -32,24 +37,43 @@ namespace ThermostatAutomation.Controllers
             _client = new MongoClient("mongodb://localhost:27017");
             _db = _client.GetDatabase("Thermostat");
 
-            var collection = _db.GetCollection<SettingsModel>("Settings");
-            var emptyFilter = FilterDefinition<SettingsModel>.Empty;
-            //new FilterDefinitionBuilder<SettingsModel>().
-            var result = await collection.FindAsync(emptyFilter);
-            settings = result.FirstOrDefault();
+            //var collection = _db.GetCollection<SettingsModel>("Settings");
+            //var emptyFilter = FilterDefinition<SettingsModel>.Empty;
+            ////new FilterDefinitionBuilder<SettingsModel>().
+            //var result = await collection.FindAsync(emptyFilter);
+            //settings = result.FirstOrDefault();
 
-            // TODO: this is a good candidate to move to startup?
-            if (settings == null)
-            {
-                //create the settings
-                settings = new SettingsModel();
-                await collection.InsertOneAsync(settings);
-            }
+            //// TODO: this is a good candidate to move to startup?
+            //if (settings == null)
+            //{
+            //    //create the settings
+            //    settings = new SettingsModel();
+            //    await collection.InsertOneAsync(settings);
+            //}
            
             ViewData["Zones"] = Status.Instance.Zones;
             
             //TODO: show multiple zones in the UI?
             ViewData["HeatingStatus"] = _engine.Rules.Evaluate(channel: 0) ? "ON" : "OFF";
+
+            //TODO: this is not exactly the MVC way, we should be making a new POST action for this
+            if (Request.Method == "POST")
+            {
+                string newRule = Request.Form["SelectedRules"];
+                if (newRule != _engine.Rules.GetType().Name)
+                {
+                    RuleItem rulesEngine = Status.Instance.Rules.Single(x => newRule == x.ClassName);
+                    if (rulesEngine != null)
+                    {
+                        _engine.Enable(rulesEngine.ClassName);
+
+                        Repository rep = new Repository();
+                        var settings = rep.GetSettings();
+                        settings.ActiveEngine = rulesEngine.ClassName;
+                        rep.UpdateSettings(settings);
+                    }
+                }
+            }
             
             var rules = Status.Instance.Rules.Select(x => new SelectListItem {
                 Text = x.FriendlyName,
@@ -64,7 +88,13 @@ namespace ThermostatAutomation.Controllers
         public IActionResult Stats()
         {
             Repository rep = new Repository();
+            Stopwatch s = new Stopwatch();
+            s.Start();
             var telemetry = rep.GetOneDayTelemetry();
+            s.Stop();
+            _logger.LogInformation($"Getting telemetry for one day took {s.ElapsedMilliseconds}ms");
+
+
             telemetry = telemetry.GroupBy(x => x.Timestamp.ToString("MM/dd/yy H:mm")).Select(x => x.Merge()).ToList();
 
             //let's filter the telemetry (better do it on input?)
@@ -90,5 +120,12 @@ namespace ThermostatAutomation.Controllers
         {
             return View();
         }
+
+        public IActionResult Benchmark()
+        {
+            return View();
+        }
     }
+
+
 }

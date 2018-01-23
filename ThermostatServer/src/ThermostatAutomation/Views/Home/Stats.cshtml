@@ -14,7 +14,7 @@
         //return "null,null,null";
 
         string output = string.Empty;
-        
+
         foreach (Zone z in Status.Instance.Zones)
         {
             bool found = false;
@@ -54,12 +54,17 @@
         }
         return output;
     };
-
-    string chartValues = string.Join(",", telemetry.Select(t => "[new Date('" + t.Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "')," + f(t) + ",null]"));
+    System.Diagnostics.Stopwatch s = new System.Diagnostics.Stopwatch();
+    s.Start();
+    //TODO: figure out a way to calculate the capacity upfront
+    System.Text.StringBuilder sb = new System.Text.StringBuilder(92868);
+    //string chartValues;
+    sb.Append(string.Join(",", telemetry.Select(t => "[new Date('" + t.Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "')," + f(t) + ",null]")));
 
     //have to figure out the chart min and max to draw the areas where the heating was on
     decimal chartMax = Math.Floor(telemetry.Max(x => x.Zones.Max(y => y.Temperature)) ?? 0m) + 1;
     decimal chartMin = Math.Ceiling(telemetry.Min(x => x.Zones.Min(y => y.Temperature)) ?? 1m) - 1;
+    string filledNulls = fillNulls(zoneCount);
 
     bool heaterOn = false;
     for (int i = 0; i < telemetry.Count; i++)
@@ -67,32 +72,38 @@
         if (telemetry[i].Channels != null && telemetry[i].Channels[0] != heaterOn)
         {
             heaterOn = telemetry[i].Channels[0];
+            string timestamp = telemetry[i].Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz");
             if (heaterOn)
             {
-                chartValues += ",[new Date('" + telemetry[i].Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMin + "]";
-                chartValues += ",[new Date('" + telemetry[i].Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMax + "]";
+                sb.Append(",[new Date('").Append(timestamp).Append("'), ").Append(filledNulls).Append(", ").Append(chartMin).Append("]");
+                sb.Append(",[new Date('").Append(timestamp).Append("'), ").Append(filledNulls).Append(", ").Append(chartMax).Append("]");
             }
             else
             {
-                chartValues += ",[new Date('" + telemetry[i].Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMax + "]";
-                chartValues += ",[new Date('" + telemetry[i].Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMin + "]";
+                sb.Append(",[new Date('").Append(timestamp).Append("'), ").Append(filledNulls).Append(", ").Append(chartMax).Append("]");
+                sb.Append(",[new Date('").Append(timestamp).Append("'), ").Append(filledNulls).Append(", ").Append(chartMin).Append("]");
             }
         }
     }
 
     if (telemetry.Count > 0)
     {
+        string timestamp = telemetry.Last().Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz");
         if (!heaterOn)
         {
-            chartValues += ",[new Date('" + telemetry.Last().Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMin + "]";
-            chartValues += ",[new Date('" + telemetry.Last().Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMax + "]";
+            sb.Append(",[new Date('").Append(timestamp).Append("'), ").Append(filledNulls).Append(", ").Append(chartMin).Append("]");
+            sb.Append(",[new Date('").Append(timestamp).Append("'), ").Append(filledNulls).Append(", ").Append(chartMax).Append("]");
         }
         else
         {
-            chartValues += ",[new Date('" + telemetry.Last().Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMax + "]";
-            chartValues += ",[new Date('" + telemetry.Last().Timestamp.ToString("yyyy-MM-ddTHH\\:mmzzz") + "'), " + fillNulls(zoneCount) + ", " + chartMin + "]";
+            sb.Append(",[new Date('").Append(timestamp).Append("'), ").Append(filledNulls).Append(", ").Append(chartMax).Append("]");
+            sb.Append(",[new Date('").Append(timestamp).Append("'), ").Append(filledNulls).Append(", ").Append(chartMin).Append("]");
         }
     }
+
+    string chartValues = sb.ToString();
+    s.Stop();
+    var time = s.ElapsedMilliseconds;
 }
 
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>

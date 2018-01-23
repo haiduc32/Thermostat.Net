@@ -20,6 +20,11 @@ namespace ThermostatAutomation.Controllers
             _engine = engine;
         }
 
+        [HttpGet("benchmark")]
+        public IActionResult Benchmark()
+        {
+            return Ok();
+        }
 
         // GET: api/
         [HttpGet("{channel?}")]
@@ -40,6 +45,12 @@ namespace ThermostatAutomation.Controllers
         [HttpPost("temperature")]
         public void Post([FromBody]Zone value)
         {
+            // this is a sensor check. in case the sensor fails, it can report negative values. 5 is put as a good limit.
+            if (value.Temperature < 5)
+            {
+                return;
+            }
+
             Zone r = Status.Instance.Zones.SingleOrDefault(x => x.Name == value.Name);
 
             if (r != null)

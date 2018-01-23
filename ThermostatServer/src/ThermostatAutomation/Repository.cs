@@ -57,11 +57,13 @@ namespace ThermostatAutomation
         public void UpdateSettings(SettingsModel settings)
         {
             var collection = DB.GetCollection<SettingsModel>("Settings");
-
             var emptyFilter = FilterDefinition<SettingsModel>.Empty;
-            
-            //TODO: check it!
-            collection.ReplaceOne(emptyFilter, settings);
+            //new FilterDefinitionBuilder<SettingsModel>().
+            var result = collection.Find(emptyFilter);
+            SettingsModel foundSettings = result.FirstOrDefault();
+
+            settings._id = foundSettings._id;
+            collection.ReplaceOne(emptyFilter, settings, new UpdateOptions { IsUpsert = true });
         }
 
         public async Task AddTelemetryAsync(TelemetryModel telemetry)
@@ -95,9 +97,19 @@ namespace ThermostatAutomation
             var engineNameFilter = Builders<RuleOverrideModel>.Filter.Eq("EngineName", engineName);
             var ruleNameFilter = Builders<RuleOverrideModel>.Filter.Eq("RuleName", rule.RuleName);
             var filter = Builders<RuleOverrideModel>.Filter.And(engineNameFilter, ruleNameFilter);
-            
+            var r  = collection.Find(filter);
+            var existingOverride = r.SingleOrDefault();
+            if (existingOverride != null)
+            {
+                rule._id = existingOverride._id;
+                collection.ReplaceOne(filter, rule, new UpdateOptions { IsUpsert = true });
+            }
+            else
+            {
+                collection.InsertOne(rule); 
+            }
             //add or update
-            collection.ReplaceOne(filter, rule, new UpdateOptions { IsUpsert = true });
+            
         }
 
         public List<RuleOverrideModel> GetOverrides(string engineName)
