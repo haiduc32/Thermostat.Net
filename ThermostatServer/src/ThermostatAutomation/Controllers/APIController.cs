@@ -7,29 +7,35 @@ using MongoDB.Driver;
 using ThermostatAutomation.Models;
 using ThermostatAutomation.Rules;
 
-// For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace ThermostatAutomation.Controllers
 {
-    
-
     [Route("api")]
     public class APIController : Controller
     {
+        Engine _engine;
 
-        // GET: api/
-        [HttpGet]
-        public string Get(int zone = 0)
+        public APIController(Engine engine)
         {
-            return Engine.Instance.Evaluate(zone) ? "ON" : "OFF";
+            _engine = engine;
         }
 
-        //// GET api/values/5
-        //[HttpGet("{id}")]
-        //public string Get(int id)
-        //{
-        //    return "value";
-        //}
+        [HttpGet("benchmark")]
+        public IActionResult Benchmark()
+        {
+            return Ok();
+        }
+
+        // GET: api/
+        [HttpGet("{channel?}")]
+        public string Get(int channel = 0)
+        {
+            bool channelStatus = _engine.Rules.Evaluate(channel);
+
+            Status.Instance.Channels[channel] = channelStatus;
+
+            return channelStatus ? "ON" : "OFF";
+        }
 
         // POST api/values
         /// <summary>
@@ -37,8 +43,14 @@ namespace ThermostatAutomation.Controllers
         /// </summary>
         /// <param name="value">Values come by the region index.</param>
         [HttpPost("temperature")]
-        public async void Post([FromBody]Zone value)
+        public void Post([FromBody]Zone value)
         {
+            // this is a sensor check. in case the sensor fails, it can report negative values. 5 is put as a good limit.
+            if (value.Temperature < 5)
+            {
+                return;
+            }
+
             Zone r = Status.Instance.Zones.SingleOrDefault(x => x.Name == value.Name);
 
             if (r != null)
@@ -51,30 +63,6 @@ namespace ThermostatAutomation.Controllers
                 value.Timestamp = DateTime.Now;
                 Status.Instance.Zones.Add(value);
             }
-
-            MongoClient _client;
-            IMongoDatabase _db;
-
-            _client = new MongoClient("mongodb://localhost:27017");
-            _db = _client.GetDatabase("Thermostat");
-
-            var collection = _db.GetCollection<TelemetryModel>("Telemetry");
-
-            TelemetryModel telemetry = new TelemetryModel { Zones = Status.Instance.Zones, Timestamp = DateTime.Now };
-            Repository rep = new Repository();
-            rep.AddTelemetry(telemetry);
-        }   
-
-        //// PUT api/values/5
-        //[HttpPut("{id}")]
-        //public void Put(int id, [FromBody]string value)
-        //{
-        //}
-
-        //// DELETE api/values/5
-        //[HttpDelete("{id}")]
-        //public void Delete(int id)
-        //{
-        //}
+        }
     }
 }

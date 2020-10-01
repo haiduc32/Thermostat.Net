@@ -14,5 +14,9 @@ namespace ThermostatAutomation.Models
         public List<Zone> Zones { get; set; }
         
         public decimal? OutsideTemperature { get; set; }
+
+        public List<bool> Channels { get; set; }
     }
+
+    
 }

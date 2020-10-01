@@ -5,34 +5,35 @@ using System.Threading.Tasks;
 
 namespace ThermostatAutomation.Rules
 {
-    public static class Engine
+    public class Engine
     {
-        private static readonly object _lockObject = new object();
-        private static IRulesEngine _rulesEngine;
+        //private static readonly object _lockObject = new object();
+        private IRulesEngine _rulesEngine;
 
-        public static Type SelectedRulesEngine { get; set; }
+        public Repository Repository { get; set; }
 
-        public static IRulesEngine Instance
+        public IRulesEngine Rules
         {
             get
             {
                 if (_rulesEngine == null)
                 {
-                    lock (_lockObject)
-                    {
-                        if (_rulesEngine == null)
-                        {
-                            if (SelectedRulesEngine == null)
-                            {
-                                throw new ArgumentNullException("SelectedRulesEngine property must be set before accessing the Instance property.");
-                            }
-
-                            _rulesEngine = (IRulesEngine)Activator.CreateInstance(SelectedRulesEngine);
-                        }
-                    }
+                    throw new ArgumentNullException("SelectedRulesEngine property must be set before accessing the Instance property.");
                 }
                 return _rulesEngine;
             }
-        } 
+        }
+
+        public void Enable(string selectedEngine)
+        {
+            Type engineType = Type.GetType("ThermostatAutomation.Rules." + selectedEngine);
+            var newRulesEngine = (IRulesEngine)Activator.CreateInstance(engineType);
+
+            newRulesEngine.Repository = Repository;
+            newRulesEngine.Initialize();
+
+            // switch to the new engine
+            _rulesEngine = newRulesEngine;
+        }
     }
 }

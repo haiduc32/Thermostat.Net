@@ -17,6 +17,9 @@ Windows installed on the PC and .Net Core installed.
 ### Raspberry PI
 It's not possible to run the server side on Raspberry PI just yet.. Thought the code is inteded to be run on it as soon as .Net Core is supported. That is supposed to happen sometimes in early 2017, so fingers crossed!
 
+### SSL Certificate
+Interacting with Alexa requires an SSL certificate on your server. How to get this working on windows with Let's Encrypt: https://weblog.west-wind.com/posts/2016/feb/22/using-lets-encrypt-with-iis-on-windows#TheEasyWay:LetsEncrypt-Win-Simple
+
 ### How it works
 
 TODO: this part is in work, more parts to come

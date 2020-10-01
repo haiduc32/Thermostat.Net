@@ -17,45 +17,60 @@ namespace ThermostatAutomation.Rules
 {
     public class RadusRules : SimpleRulesEngine
     {
-        public RadusRules() : base()
+        const decimal ComfortTemp = 21.5m;
+
+        /// <summary>
+        /// Need a readable name for voice controll integration.
+        /// </summary>
+        public override string Name => "Daily";
+
+        /// <summary>
+        /// Overriding the max temp as it best suits me and I don't want accidentaly going over that limit.
+        /// </summary>
+        public override decimal MaxTemperature => 22.5m;
+
+        protected override void BuildRules()
         {
-            //add all the rules here
+            //add all the rules here, rule are evaluated in the order their added:
+            // the first rule that matches will be executed, even if it overrides a rule added later.
             //morning rule
-            Rules.Add(new Rule
+            Rules.Add(new Rule("Morning")
             {
-                StartTime = new TimeSpan(6, 30, 0),
-                EndTime = new TimeSpan(7, 20, 0),
+                StartTime = new TimeSpan(5, 30, 0),
+                EndTime = new TimeSpan(7, 00, 0),
                 DaysOfTheWeek = WorkingDays,
                 Zone = "Living",
-                Temperature = 23m
+                Temperature = ComfortTemp
             });
             //evening rule
-            Rules.Add(new Rule
+            Rules.Add(new Rule("Evening")
             {
-                StartTime = new TimeSpan(18, 30, 0),
-                EndTime = new TimeSpan(22, 30, 0),
+                StartTime = new TimeSpan(18, 00, 0),
+                EndTime = new TimeSpan(22, 00, 0),
                 DaysOfTheWeek = WorkingDays,
                 Zone = "Office",
-                Temperature = 22m
+                Temperature = ComfortTemp
             });
-            //night rule (applies to all days)
-            Rules.Add(new Rule
+            //bedtime rule (applies to all days)
+            Rules.Add(new Rule("Bedtime")
             {
-                StartTime = new TimeSpan(18, 30, 0),
+                StartTime = new TimeSpan(22, 00, 0),
                 EndTime = new TimeSpan(22, 30, 0),
                 Zone = "Bedroom",
                 Temperature = 20m
             });
-            //for the weekend keep it on all the time
-            Rules.Add(new Rule
+            //for the weekend keep it on all the time (except at night of course..)
+            Rules.Add(new Rule("Weekend")
             {
+                StartTime = new TimeSpan(7, 30, 0),
+                EndTime = new TimeSpan(22, 00, 0),
                 DaysOfTheWeek = new List<DayOfWeek> { DayOfWeek.Saturday, DayOfWeek.Sunday },
                 Zone = "Office",
-                Temperature = 22m
+                Temperature = ComfortTemp
             });
 
             // do we need a safety net? if no rule found apply this rule
-            Rules.Add(new Rule
+            Rules.Add(new Rule("default")
             {
                 Temperature = 18m
             });

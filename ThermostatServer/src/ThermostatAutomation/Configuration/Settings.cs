@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ThermostatAutomation
+namespace ThermostatAutomation.Configuration
 {
     public class ChannelSettings
     {
